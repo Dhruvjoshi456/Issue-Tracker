@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Tracker - API Testing</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <link rel="stylesheet" href="../css/forms.css">
+    <link rel="stylesheet" href="../css/buttons.css">
+    <link rel="stylesheet" href="../css/table.css">
+    <link rel="stylesheet" href="../css/badges.css">
+    <link rel="stylesheet" href="../css/messages.css">
+    
+    <style>
+        .test-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            font-size: 0.9rem;
+        }
+        
+        .response-area {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-flask"></i> API Testing Interface</h1>
+            <p class="subtitle">Test and Debug Issue Tracker API Endpoints</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="controls-panel">
+            <div class="action-buttons" style="display: flex; gap: 15px; margin-bottom: 0;">
+                <a href="../index.html" class="btn btn-primary">
+                    <i class="fas fa-home"></i> Back to Dashboard
+                </a>
+                <a href="dashboard.html" class="btn btn-info">
+                    <i class="fas fa-chart-line"></i> Modern Dashboard
+                </a>
+                <button class="btn btn-success" onclick="checkBackendHealth()">
+                    <i class="fas fa-heartbeat"></i> Health Check
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="loadingMessage" class="message loading">
+            <i class="fas fa-spinner fa-spin"></i> Loading...
+        </div>
+        <div id="errorMessage" class="message error"></div>
+        <div id="successMessage" class="message success"></div>
+
+        <!-- Health Check Test -->
+        <div class="test-section">
+            <div class="test-header">
+                <h3><i class="fas fa-heartbeat"></i> Health Check</h3>
+                <button class="btn btn-primary" onclick="testHealthEndpoint()">
+                    <i class="fas fa-play"></i> Test
+                </button>
+            </div>
+            <div class="endpoint-url">GET /health</div>
+            <div id="healthResponse" class="response-area">Click "Test" to check backend health status...</div>
+        </div>
+
+        <!-- Get All Issues Test -->
+        <div class="test-section">
+            <div class="test-header">
+                <h3><i class="fas fa-list"></i> Get All Issues</h3>
+                <button class="btn btn-primary" onclick="testGetAllIssues()">
+                    <i class="fas fa-play"></i> Test
+                </button>
+            </div>
+            <div class="endpoint-url">GET /issues</div>
+            <div id="getAllResponse" class="response-area">Click "Test" to fetch all issues...</div>
+        </div>
+
+        <!-- Create Issue Test -->
+        <div class="test-section">
+            <div class="test-header">
+                <h3><i class="fas fa-plus"></i> Create Issue</h3>
+                <div>
+                    <button class="btn btn-warning" onclick="testCreateIssue()">
+                        <i class="fas fa-flask"></i> Create Test Issue
+                    </button>
+                    <button class="btn btn-primary" onclick="testCreateCustomIssue()">
+                        <i class="fas fa-play"></i> Create Custom Issue
+                    </button>
+                </div>
+            </div>
+            <div class="endpoint-url">POST /issues</div>
+            
+            <!-- Custom Issue Form -->
+            <div style="margin: 15px 0;">
+                <div class="filter-row">
+                    <input type="text" id="testTitle" class="form-control" placeholder="Issue Title" value="Test API Issue">
+                    <select id="testStatus" class="form-control">
+                        <option value="open">Open</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                <div class="filter-row" style="margin-top: 10px;">
+                    <select id="testPriority" class="form-control">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+                    <input type="email" id="testAssignee" class="form-control" placeholder="Assignee Email" value="tester@company.com">
+                </div>
+                <textarea id="testDescription" class="form-control textarea" placeholder="Issue Description" style="margin-top: 10px;">This is a test issue created via the API testing interface.</textarea>
+            </div>
+            
+            <div id="createResponse" class="response-area">Click "Create Test Issue" or "Create Custom Issue" to test issue creation...</div>
+        </div>
+
+        <!-- Get Issue by ID Test -->
+        <div class="test-section">
+            <div class="test-header">
+                <h3><i class="fas fa-search"></i> Get Issue by ID</h3>
+                <button class="btn btn-primary" onclick="testGetIssueById()">
+                    <i class="fas fa-play"></i> Test
+                </button>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="issueIdInput" class="form-control" placeholder="Enter Issue ID (leave empty to use latest)">
+            </div>
+            <div class="endpoint-url">GET /issues/{id}</div>
+            <div id="getByIdResponse" class="response-area">Enter an Issue ID and click "Test" to fetch issue details...</div>
+        </div>
+
+        <!-- Issues Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <h2 class="table-title">Current Issues</h2>
+                <button class="btn btn-warning" onclick="refreshIssuesTable()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="issues-table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag"></i> ID</th>
+                            <th><i class="fas fa-heading"></i> Title</th>
+                            <th><i class="fas fa-flag"></i> Status</th>
+                            <th><i class="fas fa-exclamation-triangle"></i> Priority</th>
+                            <th><i class="fas fa-user"></i> Assignee</th>
+                            <th><i class="fas fa-clock"></i> Created</th>
+                        </tr>
+                    </thead>
+                    <tbody id="testIssuesTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="testEmptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-inbox"></i>
+                <h3>No Issues Found</h3>
+                <p>Create your first test issue using the form above.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="../js/utils.js"></script>
+    <script src="../js/api.js"></script>
+    
+    <script>
+        let lastCreatedIssueId = null;
+
+        // Health Check Test
+        async function testHealthEndpoint() {
+            const responseDiv = document.getElementById('healthResponse');
+            try {
+                responseDiv.textContent = 'Testing health endpoint...';
+                MessageService.showLoading(true);
+                
+                const data = await ApiService.healthCheck();
+                
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+                MessageService.showSuccess('✅ Health check successful!');
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+                MessageService.showError('❌ Health check failed!');
+            } finally {
+                MessageService.showLoading(false);
+            }
+        }
+
+        // Get All Issues Test
+        async function testGetAllIssues() {
+            const responseDiv = document.getElementById('getAllResponse');
+            try {
+                responseDiv.textContent = 'Fetching all issues...';
+                MessageService.showLoading(true);
+                
+                const data = await ApiService.getIssues();
+                
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+                MessageService.showSuccess(`✅ Found ${data.issues.length} issues`);
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+                MessageService.showError('❌ Failed to fetch issues!');
+            } finally {
+                MessageService.showLoading(false);
+            }
+        }
+
+        // Create Test Issue
+        async function testCreateIssue() {
+            const responseDiv = document.getElementById('createResponse');
+            try {
+                responseDiv.textContent = 'Creating test issue...';
+                MessageService.showLoading(true);
+                
+                const testIssue = {
+                    title: `Test Issue - ${new Date().toLocaleTimeString()}`,
+                    description: `This is a test issue created at ${new Date().toLocaleString()} via the API testing interface.`,
+                    status: "open",
+                    priority: "medium",
+                    assignee: "tester@company.com"
+                };
+
+                const data = await ApiService.createIssue(testIssue);
+                lastCreatedIssueId = data.id;
+                
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+                MessageService.showSuccess(`✅ Test issue created! ID: ${data.id.substring(0, 8)}...`);
+                
+                // Refresh table
+                refreshIssuesTable();
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+                MessageService.showError('❌ Failed to create test issue!');
+            } finally {
+                MessageService.showLoading(false);
+            }
+        }
+
+        // Create Custom Issue
+        async function testCreateCustomIssue() {
+            const responseDiv = document.getElementById('createResponse');
+            try {
+                responseDiv.textContent = 'Creating custom issue...';
+                MessageService.showLoading(true);
+                
+                const customIssue = {
+                    title: document.getElementById('testTitle').value.trim(),
+                    description: document.getElementById('testDescription').value.trim(),
+                    status: document.getElementById('testStatus').value,
+                    priority: document.getElementById('testPriority').value,
+                    assignee: document.getElementById('testAssignee').value.trim() || null
+                };
+
+                if (!customIssue.title) {
+                    throw new Error('Title is required');
+                }
+
+                const data = await ApiService.createIssue(customIssue);
+                lastCreatedIssueId = data.id;
+                
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+                MessageService.showSuccess(`✅ Custom issue created! ID: ${data.id.substring(0, 8)}...`);
+                
+                // Refresh table
+                refreshIssuesTable();
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+                MessageService.showError('❌ Failed to create custom issue!');
+            } finally {
+                MessageService.showLoading(false);
+            }
+        }
+
+        // Get Issue by ID Test
+        async function testGetIssueById() {
+            const responseDiv = document.getElementById('getByIdResponse');
+            try {
+                let issueId = document.getElementById('issueIdInput').value.trim();
+                
+                if (!issueId) {
+                    if (lastCreatedIssueId) {
+                        issueId = lastCreatedIssueId;
+                        document.getElementById('issueIdInput').value = issueId;
+                    } else {
+                        throw new Error('Please enter an Issue ID or create an issue first');
+                    }
+                }
+
+                responseDiv.textContent = `Fetching issue ${issueId.substring(0, 8)}...`;
+                MessageService.showLoading(true);
+                
+                const data = await ApiService.getIssue(issueId);
+                
+                responseDiv.textContent = JSON.stringify(data, null, 2);
+                MessageService.showSuccess('✅ Issue details fetched successfully!');
+            } catch (error) {
+                responseDiv.textContent = `Error: ${error.message}`;
+                MessageService.showError('❌ Failed to fetch issue details!');
+            } finally {
+                MessageService.showLoading(false);
+            }
+        }
+
+        // Refresh Issues Table
+        async function refreshIssuesTable() {
+            try {
+                const data = await ApiService.getIssues();
+                displayTestIssues(data.issues);
+            } catch (error) {
+                MessageService.showError('Failed to refresh issues table');
+            }
+        }
+
+        // Display Issues in Test Table
+        function displayTestIssues(issues) {
+            const tbody = document.getElementById('testIssuesTableBody');
+            const emptyState = document.getElementById('testEmptyState');
+            const table = document.querySelector('.table-responsive');
+            
+            if (issues.length === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'block';
+            emptyState.style.display = 'none';
+            
+            tbody.innerHTML = '';
+
+            issues.forEach(issue => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <span class="issue-id" onclick="document.getElementById('issueIdInput').value='${issue.id}'; testGetIssueById();" title="Click to fetch details">
+                            ${issue.id.substring(0, 8)}...
+                        </span>
+                    </td>
+                    <td><strong>${Utils.escapeHtml(issue.title)}</strong></td>
+                    <td><span class="badge status-${issue.status.replace(' ', '-')}">${issue.status}</span></td>
+                    <td><span class="badge priority-${issue.priority}">${issue.priority}</span></td>
+                    <td>${issue.assignee ? Utils.escapeHtml(issue.assignee) : '<em style="color: #6c757d;">Unassigned</em>'}</td>
+                    <td><small style="color: #6c757d;">${new Date(issue.created_at).toLocaleString()}</small></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Backend Health Check
+        async function checkBackendHealth() {
+            await testHealthEndpoint();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshIssuesTable();
+        });
+    </script>
+</body>
+</html>

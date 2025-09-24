@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Tracker - Modern Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="frontend/css/main.css">
+    <link rel="stylesheet" href="frontend/css/header.css">
+    <link rel="stylesheet" href="frontend/css/forms.css">
+    <link rel="stylesheet" href="frontend/css/buttons.css">
+    <link rel="stylesheet" href="frontend/css/table.css">
+    <link rel="stylesheet" href="frontend/css/badges.css">
+    <link rel="stylesheet" href="frontend/css/modal.css">
+    <link rel="stylesheet" href="frontend/css/messages.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-bug"></i> Issue Tracker</h1>
+            <p class="subtitle">Modern Dashboard for Issue Management</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="controls-panel">
+            <div class="action-buttons" style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <a href="frontend/pages/dashboard.html" class="btn btn-primary">
+                    <i class="fas fa-chart-line"></i> Enhanced Dashboard
+                </a>
+                <a href="frontend/pages/testing.html" class="btn btn-info">
+                    <i class="fas fa-flask"></i> API Testing
+                </a>
+                <a href="test-frontend.html" class="btn btn-warning">
+                    <i class="fas fa-tools"></i> Legacy Testing
+                </a>
+                <button class="btn btn-success" onclick="checkBackendHealth()">
+                    <i class="fas fa-heartbeat"></i> Health Check
+                </button>
+            </div>
+        </div>
+
+        <!-- Welcome Section -->
+        <div class="controls-panel">
+            <div style="text-align: center;">
+                <h2 style="color: #2c3e50; margin-bottom: 20px;">
+                    <i class="fas fa-rocket"></i> Welcome to Issue Tracker
+                </h2>
+                <p style="color: #7f8c8d; font-size: 1.1rem; margin-bottom: 30px;">
+                    Choose your preferred interface to manage and track issues efficiently.
+                </p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 30px;">
+                    <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; border: 2px solid #e9ecef;">
+                        <h3 style="color: #667eea; margin-bottom: 15px;">
+                            <i class="fas fa-chart-line"></i> Enhanced Dashboard
+                        </h3>
+                        <p style="color: #6c757d; margin-bottom: 20px;">
+                            Modern, modular interface with separated CSS and JavaScript files for better maintainability.
+                        </p>
+                        <a href="frontend/pages/dashboard.html" class="btn btn-primary">
+                            <i class="fas fa-arrow-right"></i> Open Dashboard
+                        </a>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 25px; border-radius: 15px; border: 2px solid #e9ecef;">
+                        <h3 style="color: #17a2b8; margin-bottom: 15px;">
+                            <i class="fas fa-flask"></i> API Testing Interface
+                        </h3>
+                        <p style="color: #6c757d; margin-bottom: 20px;">
+                            Dedicated testing interface to interact with and debug API endpoints.
+                        </p>
+                        <a href="frontend/pages/testing.html" class="btn btn-info">
+                            <i class="fas fa-arrow-right"></i> Open Testing
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="loadingMessage" class="message loading">
+            <i class="fas fa-spinner fa-spin"></i> Loading...
+        </div>
+        <div id="errorMessage" class="message error"></div>
+        <div id="successMessage" class="message success"></div>
+
+        <!-- Quick Stats -->
+        <div class="status-cards">
+            <div class="status-card open">
+                <div class="icon"><i class="fas fa-folder-open"></i></div>
+                <div class="count" id="openCount">0</div>
+                <div class="label">Open Issues</div>
+            </div>
+            <div class="status-card progress">
+                <div class="icon"><i class="fas fa-spinner"></i></div>
+                <div class="count" id="progressCount">0</div>
+                <div class="label">In Progress</div>
+            </div>
+            <div class="status-card closed">
+                <div class="icon"><i class="fas fa-check-circle"></i></div>
+                <div class="count" id="closedCount">0</div>
+                <div class="label">Resolved</div>
+            </div>
+            <div class="status-card total">
+                <div class="icon"><i class="fas fa-list"></i></div>
+                <div class="count" id="totalCount">0</div>
+                <div class="label">Total Issues</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="frontend/js/utils.js"></script>
+    <script src="frontend/js/api.js"></script>
+    
+    <script>
+        // Backend Health Check
+        async function checkBackendHealth() {
+            try {
+                MessageService.showLoading(true);
+                MessageService.clearMessages();
+                
+                const data = await ApiService.healthCheck();
+                MessageService.showSuccess(`🎉 Backend is healthy! Status: ${data.status.toUpperCase()}`);
+            } catch (error) {
+                MessageService.showError(`Failed to connect to backend: ${error.message}`);
+            } finally {
+                MessageService.showLoading(false);
+            }
+        }
+
+        // Load quick stats
+        async function loadQuickStats() {
+            try {
+                const data = await ApiService.getIssues();
+                const issues = data.issues;
+                
+                const openCount = issues.filter(issue => issue.status === 'open').length;
+                const progressCount = issues.filter(issue => issue.status === 'in-progress').length;
+                const closedCount = issues.filter(issue => issue.status === 'closed').length;
+                const totalCount = issues.length;
+
+                document.getElementById('openCount').textContent = openCount;
+                document.getElementById('progressCount').textContent = progressCount;
+                document.getElementById('closedCount').textContent = closedCount;
+                document.getElementById('totalCount').textContent = totalCount;
+            } catch (error) {
+                console.log('Could not load quick stats - backend may not be running');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadQuickStats();
+        });
+    </script>
+</body>
+</html>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        /* Status Cards */
+        .status-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .status-card.open .icon { color: #3498db; }
+        .status-card.progress .icon { color: #f39c12; }
+        .status-card.closed .icon { color: #27ae60; }
+        .status-card.total .icon { color: #9b59b6; }
+
+        .status-card .count {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .status-card .label {
+            color: #7f8c8d;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .search-section, .filter-section, .action-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        /* Messages */
+        .message {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            font-weight: 500;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .message.success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 1px solid #28a745;
+            color: #155724;
+        }
+
+        .message.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border: 1px solid #dc3545;
+            color: #721c24;
+        }
+
+        .message.loading {
+            background: linear-gradient(135deg, #cce5ff 0%, #b3d9ff 100%);
+            border: 1px solid #007bff;
+            color: #004085;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Issues Table */
+        .table-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .table-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .issues-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .issues-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .issues-table th:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+
+        .issues-table td {
+            padding: 18px 15px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .issues-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Status and Priority Badges */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.status-open { background: #e3f2fd; color: #1976d2; }
+        .badge.status-in-progress { background: #fff3e0; color: #f57c00; }
+        .badge.status-closed { background: #e8f5e8; color: #388e3c; }
+
+        .badge.priority-low { background: #f3e5f5; color: #7b1fa2; }
+        .badge.priority-medium { background: #e0f2f1; color: #00695c; }
+        .badge.priority-high { background: #fff3e0; color: #ef6c00; }
+        .badge.priority-critical { background: #ffebee; color: #c62828; }
+
+        /* Issue ID styling */
+        .issue-id {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .issue-id:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Action buttons in table */
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        /* Modal styles for create form */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            position: relative;
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-control.textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Issue detail view styles */
+        .detail-row {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .detail-row strong {
+            color: #2c3e50;
+            display: inline-block;
+            min-width: 120px;
+            font-weight: 600;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .status-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .issues-table {
+                font-size: 0.85rem;
+            }
+
+            .issues-table th,
+            .issues-table td {
+                padding: 12px 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .status-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-bug"></i> Issue Tracker</h1>
+            <p class="subtitle">Professional Issue Management Dashboard</p>
+        </div>
+
+        <!-- Status Cards -->
+        <div class="status-cards">
+            <div class="status-card open">
+                <div class="icon"><i class="fas fa-folder-open"></i></div>
+                <div class="count" id="openCount">0</div>
+                <div class="label">Open Issues</div>
+            </div>
+            <div class="status-card progress">
+                <div class="icon"><i class="fas fa-clock"></i></div>
+                <div class="count" id="progressCount">0</div>
+                <div class="label">In Progress</div>
+            </div>
+            <div class="status-card closed">
+                <div class="icon"><i class="fas fa-check-circle"></i></div>
+                <div class="count" id="closedCount">0</div>
+                <div class="label">Resolved</div>
+            </div>
+            <div class="status-card total">
+                <div class="icon"><i class="fas fa-list"></i></div>
+                <div class="count" id="totalCount">0</div>
+                <div class="label">Total Issues</div>
+            </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <!-- Search Section -->
+                <div class="search-section">
+                    <div class="section-title">
+                        <i class="fas fa-search"></i>
+                        Search Issues
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Search by title, description, or assignee...">
+                    </div>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="filter-section">
+                    <div class="section-title">
+                        <i class="fas fa-filter"></i>
+                        Filter & Sort
+                    </div>
+                    <div class="filter-row">
+                        <select id="statusFilter" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="open">Open</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                        <select id="priorityFilter" class="form-control">
+                            <option value="">All Priority</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <input type="text" id="assigneeFilter" class="form-control" placeholder="Filter by assignee...">
+                </div>
+
+                <!-- Action Section -->
+                <div class="action-section">
+                    <div class="section-title">
+                        <i class="fas fa-tools"></i>
+                        Quick Actions
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="openCreateModal()">
+                            <i class="fas fa-plus"></i> New Issue
+                        </button>
+                        <button class="btn btn-success" onclick="testCreateIssue()">
+                            <i class="fas fa-flask"></i> Test Create Issue
+                        </button>
+                        <button class="btn btn-info" onclick="checkBackendHealth()">
+                            <i class="fas fa-heartbeat"></i> Health Check
+                        </button>
+                        <button class="btn btn-warning" onclick="loadIssues()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="loadingMessage" class="message loading">
+            <i class="fas fa-spinner fa-spin"></i> Loading...
+        </div>
+        <div id="errorMessage" class="message error"></div>
+        <div id="successMessage" class="message success"></div>
+
+        <!-- Issues Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <h2 class="table-title">Issues Overview</h2>
+                <span class="badge status-open" id="issueCount">0 issues</span>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="issues-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortBy('id')">
+                                <i class="fas fa-hashtag"></i> ID
+                            </th>
+                            <th onclick="sortBy('title')">
+                                <i class="fas fa-heading"></i> Title
+                            </th>
+                            <th onclick="sortBy('status')">
+                                <i class="fas fa-flag"></i> Status
+                            </th>
+                            <th onclick="sortBy('priority')">
+                                <i class="fas fa-exclamation-triangle"></i> Priority
+                            </th>
+                            <th onclick="sortBy('assignee')">
+                                <i class="fas fa-user"></i> Assignee
+                            </th>
+                            <th onclick="sortBy('updated_at')">
+                                <i class="fas fa-clock"></i> Updated
+                            </th>
+                            <th><i class="fas fa-cogs"></i> Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="issuesTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <i class="fas fa-inbox"></i>
+                <h3>No Issues Found</h3>
+                <p>Create your first issue to get started with tracking.</p>
+                <button class="btn btn-primary" onclick="openCreateModal()">
+                    <i class="fas fa-plus"></i> Create First Issue
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Issue Modal -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-plus-circle"></i> Create New Issue
+                </h3>
+                <button class="close" onclick="closeCreateModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createIssueForm">
+                    <div class="form-group">
+                        <label class="form-label" for="modalTitle">
+                            <i class="fas fa-heading"></i> Title *
+                        </label>
+                        <input type="text" id="modalTitle" class="form-control" placeholder="Enter issue title..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="modalDescription">
+                            <i class="fas fa-align-left"></i> Description
+                        </label>
+                        <textarea id="modalDescription" class="form-control textarea" placeholder="Describe the issue in detail..."></textarea>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label class="form-label" for="modalStatus">
+                                <i class="fas fa-flag"></i> Status
+                            </label>
+                            <select id="modalStatus" class="form-control">
+                                <option value="open">Open</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="modalPriority">
+                                <i class="fas fa-exclamation-triangle"></i> Priority
+                            </label>
+                            <select id="modalPriority" class="form-control">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="modalAssignee">
+                            <i class="fas fa-user"></i> Assignee
+                        </label>
+                        <input type="email" id="modalAssignee" class="form-control" placeholder="Enter assignee email...">
+                    </div>
+                    
+                    <div class="action-buttons" style="margin-top: 30px;">
+                        <button type="button" class="btn btn-primary" onclick="createCustomIssue()">
+                            <i class="fas fa-save"></i> Create Issue
+                        </button>
+                        <button type="button" class="btn" onclick="closeCreateModal()" style="background: #6c757d; color: white;">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000';
+        let currentPage = 1;
+        let currentSort = 'updated_at';
+        let currentOrder = 'desc';
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadIssues();
+            
+            // Add event listeners for real-time search
+            document.getElementById('searchInput').addEventListener('input', debounce(loadIssues, 300));
+            document.getElementById('statusFilter').addEventListener('change', loadIssues);
+            document.getElementById('priorityFilter').addEventListener('change', loadIssues);
+            document.getElementById('assigneeFilter').addEventListener('input', debounce(loadIssues, 300));
+        });
+
+        // Debounce function for search input
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Health check function
+        async function checkBackendHealth() {
+            try {
+                showLoading(true);
+                clearMessages();
+                
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showSuccess(`🎉 Backend is healthy! Status: ${data.status.toUpperCase()}`);
+                } else {
+                    showError('Backend health check failed');
+                }
+            } catch (error) {
+                showError(`Failed to connect to backend: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Load issues function
+        async function loadIssues(clearSuccessMessage = true) {
+            try {
+                showLoading(true);
+                if (clearSuccessMessage) {
+                    clearMessages();
+                } else {
+                    // Only clear error messages, keep success messages
+                    const errorDiv = document.getElementById('errorMessage');
+                    if (errorDiv) errorDiv.style.display = 'none';
+                }
+                
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    page_size: 50,
+                    sort_by: currentSort,
+                    sort_order: currentOrder
+                });
+
+                const search = document.getElementById('searchInput').value;
+                const status = document.getElementById('statusFilter').value;
+                const priority = document.getElementById('priorityFilter').value;
+                const assignee = document.getElementById('assigneeFilter').value;
+
+                if (search) params.append('search', search);
+                if (status) params.append('status', status);
+                if (priority) params.append('priority', priority);
+                if (assignee) params.append('assignee', assignee);
+
+                const response = await fetch(`${API_BASE}/issues?${params}`);
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                displayIssues(data.issues);
+                updateStatusCards(data.issues);
+                
+            } catch (error) {
+                showError(`Failed to load issues: ${error.message}`);
+                displayIssues([]);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Create custom issue function
+        async function createCustomIssue() {
+            try {
+                const title = document.getElementById('modalTitle').value.trim();
+                const description = document.getElementById('modalDescription').value.trim();
+                const status = document.getElementById('modalStatus').value;
+                const priority = document.getElementById('modalPriority').value;
+                const assignee = document.getElementById('modalAssignee').value.trim();
+
+                if (!title) {
+                    showError('Title is required');
+                    return;
+                }
+
+                showLoading(true);
+                clearMessages();
+                
+                const newIssue = {
+                    title,
+                    description: description || null,
+                    status,
+                    priority,
+                    assignee: assignee || null
+                };
+
+                const response = await fetch(`${API_BASE}/issues`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newIssue)
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                showSuccess(`✅ Issue "${title}" created successfully! ID: ${data.id.substring(0, 8)}...`);
+                
+                closeCreateModal();
+                document.getElementById('createIssueForm').reset();
+                
+                setTimeout(() => {
+                    loadIssues(false);
+                }, 1000);
+                
+            } catch (error) {
+                showError(`Failed to create issue: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Display issues in table
+        function displayIssues(issues) {
+            const tbody = document.getElementById('issuesTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const table = document.querySelector('.table-responsive');
+            
+            if (issues.length === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                document.getElementById('issueCount').textContent = '0 issues';
+                return;
+            }
+
+            table.style.display = 'block';
+            emptyState.style.display = 'none';
+            
+            tbody.innerHTML = '';
+            document.getElementById('issueCount').textContent = `${issues.length} issue${issues.length !== 1 ? 's' : ''}`;
+
+            issues.forEach(issue => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <span class="issue-id" onclick="viewIssue('${issue.id}')" title="Click to view details">
+                            ${issue.id.substring(0, 8)}...
+                        </span>
+                    </td>
+                    <td>
+                        <strong>${escapeHtml(issue.title)}</strong>
+                        ${issue.description ? `<br><small style="color: #6c757d;">${escapeHtml(issue.description.substring(0, 50))}${issue.description.length > 50 ? '...' : ''}</small>` : ''}
+                    </td>
+                    <td>
+                        <span class="badge status-${issue.status.replace(' ', '-')}">${issue.status}</span>
+                    </td>
+                    <td>
+                        <span class="badge priority-${issue.priority}">${issue.priority}</span>
+                    </td>
+                    <td>${issue.assignee ? escapeHtml(issue.assignee) : '<em style="color: #6c757d;">Unassigned</em>'}</td>
+                    <td>
+                        <small style="color: #6c757d;">
+                            ${new Date(issue.updated_at).toLocaleString()}
+                        </small>
+                    </td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="btn btn-info btn-sm" onclick="viewIssue('${issue.id}')" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-warning btn-sm" onclick="editIssue('${issue.id}')" title="Edit Issue">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update status cards
+        function updateStatusCards(issues) {
+            const openCount = issues.filter(issue => issue.status === 'open').length;
+            const progressCount = issues.filter(issue => issue.status === 'in-progress').length;
+            const closedCount = issues.filter(issue => issue.status === 'closed').length;
+            const totalCount = issues.length;
+
+            document.getElementById('openCount').textContent = openCount;
+            document.getElementById('progressCount').textContent = progressCount;
+            document.getElementById('closedCount').textContent = closedCount;
+            document.getElementById('totalCount').textContent = totalCount;
+        }
+
+        // Sort functionality
+        function sortBy(field) {
+            if (currentSort === field) {
+                currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort = field;
+                currentOrder = 'asc';
+            }
+            loadIssues();
+        }
+
+        // Modal functions
+        function openCreateModal() {
+            document.getElementById('createModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // View issue function
+        async function viewIssue(issueId) {
+            try {
+                const response = await fetch(`${API_BASE}/issues/${issueId}`);
+                if (!response.ok) {
+                    throw new Error('Issue not found');
+                }
+                const issue = await response.json();
+                
+                // Create a detailed view modal
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.style.display = 'block';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 700px;">
+                        <div class="modal-header">
+                            <h2><i class="fas fa-eye"></i> Issue Details</h2>
+                            <button class="close" onclick="this.closest('.modal').remove(); document.body.style.overflow = 'auto';">&times;</button>
+                        </div>
+                        <div class="modal-body" style="padding: 30px;">
+                            <div class="issue-detail">
+                                <div class="detail-row">
+                                    <strong>ID:</strong> 
+                                    <span style="font-family: monospace; background: #f8f9fa; padding: 2px 6px; border-radius: 4px;">${issue.id}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Title:</strong> 
+                                    <span>${issue.title}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Description:</strong> 
+                                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 5px; line-height: 1.6;">${issue.description}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Status:</strong> 
+                                    <span class="status status-${issue.status}">${issue.status.charAt(0).toUpperCase() + issue.status.slice(1)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Priority:</strong> 
+                                    <span class="priority priority-${issue.priority}">${issue.priority.charAt(0).toUpperCase() + issue.priority.slice(1)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Assignee:</strong> 
+                                    <span>${issue.assignee || 'Unassigned'}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Created:</strong> 
+                                    <span>${new Date(issue.created_at).toLocaleString()}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Last Updated:</strong> 
+                                    <span>${new Date(issue.updated_at).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                document.body.style.overflow = 'hidden';
+                
+            } catch (error) {
+                showError('Failed to load issue details: ' + error.message);
+            }
+        }
+
+        // Edit issue function (placeholder)
+        function editIssue(issueId) {
+            showSuccess(`✏️ Editing issue: ${issueId.substring(0, 8)}... (Feature coming soon)`);
+        }
+
+        // Test Create Issue function
+        async function testCreateIssue() {
+            try {
+                showLoading(true);
+                clearMessages();
+                
+                const testIssue = {
+                    title: "Test Issue - " + new Date().toLocaleTimeString(),
+                    description: "This is a test issue created at " + new Date().toLocaleString() + ". It demonstrates the issue creation functionality.",
+                    status: "open",
+                    priority: "medium",
+                    assignee: "test.user@company.com"
+                };
+
+                const response = await fetch(`${API_BASE}/issues`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testIssue)
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const issue = await response.json();
+                showSuccess(`🎉 Test issue created successfully! ID: ${issue.id.substring(0, 8)}...`);
+                
+                // Refresh the issues list
+                await loadIssues();
+                
+            } catch (error) {
+                showError('Failed to create test issue: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Message functions
+        function showLoading(show) {
+            const loadingDiv = document.getElementById('loadingMessage');
+            if (loadingDiv) {
+                loadingDiv.style.display = show ? 'block' : 'none';
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            if (errorDiv) {
+                errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            if (successDiv) {
+                successDiv.innerHTML = `${message}`;
+                successDiv.style.display = 'block';
+                setTimeout(() => {
+                    successDiv.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        function clearMessages() {
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            if (errorDiv) errorDiv.style.display = 'none';
+            if (successDiv) successDiv.style.display = 'none';
+        }
+
+        // Utility function to escape HTML
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('createModal');
+            if (event.target === modal) {
+                closeCreateModal();
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            // Escape key to close modal
+            if (event.key === 'Escape') {
+                closeCreateModal();
+            }
+            // Ctrl+N to open new issue modal
+            if (event.ctrlKey && event.key === 'n') {
+                event.preventDefault();
+                openCreateModal();
+            }
+            // Ctrl+R to refresh
+            if (event.ctrlKey && event.key === 'r') {
+                event.preventDefault();
+                loadIssues();
+            }
+        });
+    </script>
+</body>
+</html>
